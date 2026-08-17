@@ -14,7 +14,7 @@ import {
   HiExclamationTriangle
 } from "react-icons/hi2";
 import { FaSpinner } from "react-icons/fa6";
-import { supabase } from "../supabaseClient"; // Make sure the path matches where you saved supabaseClient.js
+import { supabase } from "../supabaseClient";
 
 export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -50,20 +50,19 @@ export default function Login() {
 
     try {
       if (isRegistering) {
-        // 1. Check if user already exists in Supabase
-        const { data: existingUser } = await supabase
+        // 1. Check if user already exists
+        const { data: existingUsers } = await supabase
           .from("users")
           .select("*")
-          .eq("email", email)
-          .single();
+          .eq("email", email);
 
-        if (existingUser) {
+        if (existingUsers && existingUsers.length > 0) {
           setErrorMsg("An account with this email already exists.");
           setSubmitting(false);
           return;
         }
 
-        // 2. Insert new user into Supabase table
+        // 2. Insert new user
         const { error: insertError } = await supabase
           .from("users")
           .insert([{ name, email, password, role }]);
@@ -74,18 +73,19 @@ export default function Login() {
         setIsRegistering(false);
       } else {
         // 1. Query user from Supabase table
-        const { data: user, error: queryError } = await supabase
+        const { data: users, error: queryError } = await supabase
           .from("users")
           .select("*")
           .eq("email", email)
-          .eq("password", password)
-          .single();
+          .eq("password", password);
 
-        if (queryError || !user) {
+        if (queryError || !users || users.length === 0) {
           setErrorMsg("Invalid email or password. Please check your credentials.");
           setSubmitting(false);
           return;
         }
+
+        const user = users[0];
 
         // 2. Store user session in localStorage
         localStorage.setItem("user", JSON.stringify(user));
