@@ -14,6 +14,7 @@ import {
   HiExclamationTriangle
 } from "react-icons/hi2";
 import { FaSpinner } from "react-icons/fa6";
+import { supabase } from "../supabaseClient"; // Make sure the path matches where you saved supabaseClient.js
 
 export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -47,43 +48,58 @@ export default function Login() {
     setErrorMsg("");
     setSubmitting(true);
 
-    const endpoint = isRegistering
-      ? "http://localhost:5000/register"
-      : "http://localhost:5000/login";
-    const payload = isRegistering
-      ? { name, email, password, role }
-      : { email, password };
-
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      if (isRegistering) {
+        // 1. Check if user already exists in Supabase
+        const { data: existingUser } = await supabase
+          .from("users")
+          .select("*")
+          .eq("email", email)
+          .single();
 
-      const data = await response.json();
-
-      if (response.ok) {
-        if (isRegistering) {
-          setMessage("Registration successful! You can now log in below.");
-          setIsRegistering(false);
-        } else {
-          // Store user session in localStorage
-          localStorage.setItem("user", JSON.stringify(data.user));
-
-          // Route according to user role
-          if (data.user.role === "admin") {
-            navigate("/admin");
-          } else {
-            navigate("/dashboard");
-          }
+        if (existingUser) {
+          setErrorMsg("An account with this email already exists.");
+          setSubmitting(false);
+          return;
         }
+
+        // 2. Insert new user into Supabase table
+        const { error: insertError } = await supabase
+          .from("users")
+          .insert([{ name, email, password, role }]);
+
+        if (insertError) throw insertError;
+
+        setMessage("Registration successful! You can now log in below.");
+        setIsRegistering(false);
       } else {
-        setErrorMsg(data.error || "Authentication failed. Check credentials.");
+        // 1. Query user from Supabase table
+        const { data: user, error: queryError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("email", email)
+          .eq("password", password)
+          .single();
+
+        if (queryError || !user) {
+          setErrorMsg("Invalid email or password. Please check your credentials.");
+          setSubmitting(false);
+          return;
+        }
+
+        // 2. Store user session in localStorage
+        localStorage.setItem("user", JSON.stringify(user));
+
+        // 3. Route according to user role
+        if (user.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch (err) {
       console.error("Auth error:", err);
-      setErrorMsg("Failed to connect to backend server.");
+      setErrorMsg("An error occurred during authentication. Please try again.");
     } finally {
       setSubmitting(false);
     }
