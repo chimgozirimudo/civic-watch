@@ -1,23 +1,22 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { 
-  HiBuildingOffice2, 
-  HiEnvelope, 
-  HiLockClosed, 
-  HiUser, 
-  HiShieldCheck, 
-  HiArrowRight, 
-  HiEye, 
-  HiEyeSlash, 
+import {
+  HiEnvelope,
+  HiLockClosed,
+  HiUser,
+  HiShieldCheck,
+  HiArrowRight,
+  HiEye,
+  HiEyeSlash,
   HiSparkles,
   HiCheckCircle,
-  HiExclamationTriangle
+  HiExclamationTriangle,
 } from "react-icons/hi2";
 import { FaSpinner } from "react-icons/fa6";
 import { supabase } from "../supabaseClient";
 
-export default function Login() {
-  const [isRegistering, setIsRegistering] = useState(false);
+export default function Login({ initialRegistering = false }) {
+  const [isRegistering, setIsRegistering] = useState(initialRegistering);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,14 +30,14 @@ export default function Login() {
   const handleDemoFill = (type) => {
     setMessage("");
     setErrorMsg("");
+    setIsRegistering(false);
+
     if (type === "citizen") {
-      setIsRegistering(false);
       setEmail("citizen@civicwatch.org");
       setPassword("citizen123");
     } else {
-      setIsRegistering(false);
-      setEmail("admin@civicwatch.org");
-      setPassword("admin123");
+      setEmail("pchikezie@gmail.com");
+      setPassword("1234");
     }
   };
 
@@ -48,49 +47,64 @@ export default function Login() {
     setErrorMsg("");
     setSubmitting(true);
 
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+
     try {
       if (isRegistering) {
-        // 1. Check if user already exists
-        const { data: existingUsers } = await supabase
+        const { data: existingUsers, error: lookupError } = await supabase
           .from("users")
           .select("*")
-          .eq("email", email);
+          .eq("email", normalizedEmail)
+          .limit(1);
+
+        if (lookupError) {
+          throw lookupError;
+        }
 
         if (existingUsers && existingUsers.length > 0) {
           setErrorMsg("An account with this email already exists.");
-          setSubmitting(false);
           return;
         }
 
-        // 2. Insert new user
-        const { error: insertError } = await supabase
-          .from("users")
-          .insert([{ name, email, password, role }]);
+        const { error: insertError } = await supabase.from("users").insert([
+          {
+            name: name.trim(),
+            email: normalizedEmail,
+            password: normalizedPassword,
+            role,
+          },
+        ]);
 
         if (insertError) throw insertError;
 
         setMessage("Registration successful! You can now log in below.");
         setIsRegistering(false);
+        setName("");
+        setEmail("");
+        setPassword("");
       } else {
-        // 1. Query user from Supabase table
         const { data: users, error: queryError } = await supabase
           .from("users")
           .select("*")
-          .eq("email", email)
-          .eq("password", password);
+          .eq("email", normalizedEmail)
+          .eq("password", normalizedPassword)
+          .limit(1);
 
-        if (queryError || !users || users.length === 0) {
-          setErrorMsg("Invalid email or password. Please check your credentials.");
-          setSubmitting(false);
+        if (queryError) {
+          throw queryError;
+        }
+
+        if (!users || users.length === 0) {
+          setErrorMsg(
+            "Invalid email or password. Please check your credentials.",
+          );
           return;
         }
 
         const user = users[0];
-
-        // 2. Store user session in localStorage
         localStorage.setItem("user", JSON.stringify(user));
 
-        // 3. Route according to user role
         if (user.role === "admin") {
           navigate("/admin");
         } else {
@@ -106,19 +120,23 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans flex items-center justify-center p-6">
-      
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans flex items-center justify-center p-6">
       <div className="max-w-md w-full">
-        
         {/* Brand Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-3 group mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-transform">
-              <HiBuildingOffice2 className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-2xl bg-gov-red/10 ring-1 ring-gov-red/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <img
+                src="/logo.png"
+                alt="CivicWatch logo"
+                className="w-full h-full object-contain"
+              />
             </div>
           </Link>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            {isRegistering ? "Create Your CivicWatch Account" : "Welcome Back to CivicWatch"}
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            {isRegistering
+              ? "Create Your CivicWatch Account"
+              : "Welcome Back to CivicWatch"}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             {isRegistering
@@ -128,24 +146,35 @@ export default function Login() {
         </div>
 
         {/* Auth Card */}
-        <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200">
-          
+        <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-slate-950/30 border border-slate-200 dark:border-slate-700">
           {/* Sign In / Register Tab Switcher */}
           <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl mb-6 text-xs font-semibold">
             <button
               type="button"
-              onClick={() => { setIsRegistering(false); setMessage(""); setErrorMsg(""); }}
+              onClick={() => {
+                setIsRegistering(false);
+                setMessage("");
+                setErrorMsg("");
+              }}
               className={`py-2 rounded-xl transition-all ${
-                !isRegistering ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-900"
+                !isRegistering
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-500 hover:text-slate-900"
               }`}
             >
               Sign In
             </button>
             <button
               type="button"
-              onClick={() => { setIsRegistering(true); setMessage(""); setErrorMsg(""); }}
+              onClick={() => {
+                setIsRegistering(true);
+                setMessage("");
+                setErrorMsg("");
+              }}
               className={`py-2 rounded-xl transition-all ${
-                isRegistering ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-900"
+                isRegistering
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-500 hover:text-slate-900"
               }`}
             >
               Create Account
@@ -193,11 +222,12 @@ export default function Login() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            
             {/* Name Field (if registering) */}
             {isRegistering && (
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Full Name</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Full Name
+                </label>
                 <div className="relative">
                   <HiUser className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
@@ -214,7 +244,9 @@ export default function Login() {
 
             {/* Email Field */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Email Address
+              </label>
               <div className="relative">
                 <HiEnvelope className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
@@ -230,7 +262,9 @@ export default function Login() {
 
             {/* Password Field */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Password</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Password
+              </label>
               <div className="relative">
                 <HiLockClosed className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
@@ -246,7 +280,11 @@ export default function Login() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
-                  {showPassword ? <HiEyeSlash className="w-4 h-4" /> : <HiEye className="w-4 h-4" />}
+                  {showPassword ? (
+                    <HiEyeSlash className="w-4 h-4" />
+                  ) : (
+                    <HiEye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -254,7 +292,9 @@ export default function Login() {
             {/* Account Role Selector (if registering) */}
             {isRegistering && (
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Account Role</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Account Role
+                </label>
                 <div className="relative">
                   <HiShieldCheck className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <select
@@ -262,8 +302,12 @@ export default function Login() {
                     onChange={(e) => setRole(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none"
                   >
-                    <option value="citizen">Citizen (Report & Track Issues)</option>
-                    <option value="admin">Administrator (Manage City Reports)</option>
+                    <option value="citizen">
+                      Citizen (Report & Track Issues)
+                    </option>
+                    <option value="admin">
+                      Administrator (Manage City Reports)
+                    </option>
                   </select>
                 </div>
               </div>
@@ -282,23 +326,24 @@ export default function Login() {
                 </>
               ) : (
                 <>
-                  <span>{isRegistering ? "Create Account" : "Sign In to CivicWatch"}</span>
+                  <span>
+                    {isRegistering ? "Create Account" : "Sign In to CivicWatch"}
+                  </span>
                   <HiArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
-
           </form>
-
         </div>
 
         {/* Footer Link */}
         <p className="text-center text-xs text-slate-500 mt-6">
-          Need assistance? <Link to="/" className="text-blue-600 hover:underline font-medium">Return to Home Page</Link>
+          Need assistance?{" "}
+          <Link to="/" className="text-blue-600 hover:underline font-medium">
+            Return to Home Page
+          </Link>
         </p>
-
       </div>
-
     </div>
   );
 }

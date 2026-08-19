@@ -1,39 +1,214 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap");
 @import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-gov-red: #8b0000; /* Deep red */
+  --color-gov-red-hover: #a10000;
+
+  --color-gov-gold: #b8860b; /* Gold */
+  --color-gov-gold-hover: #d4a017;
+
+  --color-gov-green: #006400; /* Dark green */
+  --color-gov-green-hover: #008000;
+
+  --color-gov-eagle: #1a1a1a; /* Dark eagle / almost black */
+
+  --color-blue-50: #fdf2f2;
+  --color-blue-100: #f7e4e4;
+  --color-blue-200: #f0c7c7;
+  --color-blue-300: #e7a0a0;
+  --color-blue-400: #d86969;
+  --color-blue-500: #b92d2d;
+  --color-blue-600: #8b0000;
+  --color-blue-700: #720000;
+  --color-blue-800: #5f0000;
+  --color-blue-900: #430000;
+
+  --font-serif: "Merriweather", serif;
+  --font-sans: "Inter", sans-serif;
+}
+
+html {
+  --brand-primary: #8b0000;
+  --brand-primary-strong: #a10000;
+  --brand-accent: #b8860b;
+  --brand-soft: #fdf2f2;
+  --brand-soft-strong: rgba(139, 0, 0, 0.12);
+}
+
+html.dark {
+  --brand-primary: #d4a017;
+  --brand-primary-strong: #e7b93a;
+  --brand-accent: #f5c86a;
+  --brand-soft: rgba(184, 134, 11, 0.12);
+  --brand-soft-strong: rgba(184, 134, 11, 0.22);
+}
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   overflow-x: hidden;
+  background-color: #f8fafc;
+  color: #1e293b;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+html.dark body {
+  background-color: #0f172a;
+  color: #e2e8f0;
 }
 
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.05); }
+html.dark .text-gov-red,
+html.dark .text-gov-red:hover {
+  color: #f5c86a;
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+html.dark .bg-gov-red,
+html.dark .bg-gov-red\/10,
+html.dark .bg-gov-red\/5 {
+  background-color: rgba(184, 134, 11, 0.18);
 }
 
-.animate-float {
-  animation: float 6s ease-in-out infinite;
+html.dark .border-gov-red,
+html.dark .border-gov-red\/20,
+html.dark .ring-gov-red {
+  border-color: rgba(184, 134, 11, 0.35);
 }
 
-.animate-pulse-glow {
-  animation: pulseGlow 4s ease-in-out infinite;
+html.dark .bg-slate-50,
+html.dark .bg-white,
+html.dark .bg-white\/95,
+html.dark .bg-white\/80 {
+  background-color: #0f172a;
 }
 
-.shimmer-text {
-  background: linear-gradient(90deg, #1f2937 0%, #4b5563 50%, #1f2937 100%);
-  background-size: 200% auto;
-  color: transparent;
-  -webkit-background-clip: text;
-  animation: shimmer 4s linear infinite;
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-700,
+html.dark .text-slate-600,
+html.dark .text-slate-500 {
+  color: #e2e8f0;
 }
 
+html.dark .border-slate-200,
+html.dark .border-slate-300,
+html.dark .border-slate-700,
+html.dark .border-slate-800 {
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+html.dark .bg-slate-100,
+html.dark .bg-slate-200 {
+  background-color: #1e293b;
+}
+
+html.dark .text-slate-400 {
+  color: #94a3b8;
+}
+
+/* Brand harmonization: use the logo's red/gold palette instead of generic blue */
+.bg-blue-50,
+.bg-blue-100,
+.bg-blue-200,
+.bg-blue-300,
+.bg-blue-400,
+.bg-blue-500,
+.bg-blue-600,
+.bg-blue-700,
+.bg-blue-800,
+.bg-blue-900,
+.dark .bg-blue-50,
+.dark .bg-blue-100,
+.dark .bg-blue-200,
+.dark .bg-blue-300,
+.dark .bg-blue-400,
+.dark .bg-blue-500,
+.dark .bg-blue-600,
+.dark .bg-blue-700,
+.dark .bg-blue-800,
+.dark .bg-blue-900 {
+  background-color: var(--brand-soft) !important;
+}
+
+.bg-blue-500,
+.bg-blue-600,
+.bg-blue-700,
+.dark .bg-blue-500,
+.dark .bg-blue-600,
+.dark .bg-blue-700 {
+  background-color: var(--brand-primary) !important;
+}
+
+.bg-blue-700,
+.dark .bg-blue-700 {
+  background-color: var(--brand-primary-strong) !important;
+}
+
+.text-blue-500,
+.text-blue-600,
+.text-blue-700,
+.text-blue-800,
+.text-blue-900,
+.text-blue-400,
+.dark .text-blue-500,
+.dark .text-blue-600,
+.dark .text-blue-700,
+.dark .text-blue-800,
+.dark .text-blue-900,
+.dark .text-blue-400 {
+  color: var(--brand-primary) !important;
+}
+
+.dark .text-blue-400,
+.dark .text-blue-500,
+.dark .text-blue-600,
+.dark .text-blue-700 {
+  color: var(--brand-accent) !important;
+}
+
+.border-blue-100,
+.border-blue-200,
+.border-blue-300,
+.border-blue-400,
+.dark .border-blue-100,
+.dark .border-blue-200,
+.dark .border-blue-300,
+.dark .border-blue-400 {
+  border-color: var(--brand-soft-strong) !important;
+}
+
+.focus\:border-blue-500:focus,
+.dark .focus\:border-blue-500:focus {
+  border-color: var(--brand-accent) !important;
+}
+
+.hover\:bg-blue-600:hover,
+.dark .hover\:bg-blue-600:hover,
+.dark\:hover\:bg-blue-500:hover {
+  background-color: var(--brand-primary) !important;
+}
+
+.hover\:bg-blue-700:hover,
+.dark .hover\:bg-blue-700:hover {
+  background-color: var(--brand-primary-strong) !important;
+}
+
+.hover\:text-blue-600:hover,
+.dark .hover\:text-blue-600:hover {
+  color: var(--brand-primary) !important;
+}
+
+.shadow-blue-500\/20,
+.shadow-blue-500\/25,
+.dark .shadow-blue-500\/20,
+.dark .shadow-blue-500\/25 {
+  box-shadow: 0 10px 20px rgba(184, 134, 11, 0.18) !important;
+}
+
+/* Accessibility Focus Rings */
+*:focus-visible {
+  outline: 3px solid #d97706; /* Gold focus ring */
+  outline-offset: 2px;
+}
