@@ -391,7 +391,10 @@ export default function Landing() {
       </section>
 
       {/* Categories & Common Issues */}
-      <section className="py-16 px-6 max-w-7xl mx-auto">
+      <section
+        id="features"
+        className="scroll-mt-32 py-16 px-6 max-w-7xl mx-auto"
+      >
         <div className="text-center max-w-2xl mx-auto mb-12">
           <span className="text-xs font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
             Issue Categories
@@ -446,7 +449,7 @@ export default function Landing() {
       {/* How It Works */}
       <section
         id="how-it-works"
-        className="py-16 bg-white/50 dark:bg-slate-900/50 border-y border-orange-200/80 dark:border-slate-800"
+        className="scroll-mt-32 py-16 bg-white/50 dark:bg-slate-900/50 border-y border-orange-200/80 dark:border-slate-800"
       >
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-14">
@@ -509,7 +512,10 @@ export default function Landing() {
       </section>
 
       {/* Live Recent Reports */}
-      <section id="reports" className="py-16 px-6 max-w-7xl mx-auto">
+      <section
+        id="reports"
+        className="scroll-mt-32 py-16 px-6 max-w-7xl mx-auto"
+      >
         <div className="bg-white/70 dark:bg-slate-900/70 rounded-3xl p-8 md:p-10 border border-orange-200/80 dark:border-slate-700">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
             <div>
@@ -612,7 +618,10 @@ export default function Landing() {
       </section>
 
       {/* Impact & Trust Banner */}
-      <section id="impact" className="py-16 px-6 max-w-7xl mx-auto">
+      <section
+        id="impact"
+        className="scroll-mt-32 py-16 px-6 max-w-7xl mx-auto"
+      >
         <div className="bg-slate-900 text-white rounded-3xl p-8 sm:p-12 relative overflow-hidden">
           <div className="relative z-10 max-w-2xl">
             <span className="text-xs font-bold uppercase tracking-widest text-blue-400 bg-blue-900/60 px-3 py-1 rounded-full border border-blue-700/50">
