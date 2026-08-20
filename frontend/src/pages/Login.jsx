@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   HiEnvelope,
   HiLockClosed,
@@ -26,6 +26,7 @@ export default function Login({ initialRegistering = false }) {
   const [message, setMessage] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleDemoFill = (type) => {
     setMessage("");
@@ -105,10 +106,13 @@ export default function Login({ initialRegistering = false }) {
         const user = users[0];
         localStorage.setItem("user", JSON.stringify(user));
 
-        if (user.role === "admin") {
-          navigate("/admin");
+        const requestedDestination = location.state?.from;
+        if (requestedDestination && user.role !== "admin") {
+          navigate(requestedDestination, { replace: true });
+        } else if (user.role === "admin") {
+          navigate("/admin", { replace: true });
         } else {
-          navigate("/dashboard");
+          navigate("/dashboard", { replace: true });
         }
       }
     } catch (err) {

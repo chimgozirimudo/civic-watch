@@ -69,6 +69,15 @@ export default function Landing() {
     }
   };
 
+  const handleDashboardAccess = (destination = "/dashboard") => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      navigate(destination);
+    } else {
+      navigate("/login", { state: { from: destination } });
+    }
+  };
+
   const getStatusBadgeColor = (status) => {
     switch (status) {
       case "Resolved":
@@ -323,13 +332,13 @@ export default function Landing() {
                 <span>Report an Issue Now</span>
               </button>
 
-              <Link
-                to="/dashboard"
+              <button
+                onClick={() => handleDashboardAccess("/dashboard")}
                 className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-orange-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold border border-orange-200 dark:border-slate-700 transition-colors flex items-center justify-center gap-2"
               >
                 <HiMagnifyingGlass className="w-4 h-4 text-slate-500" />
                 <span>View Community Reports</span>
-              </Link>
+              </button>
             </div>
 
             {/* Quick Search / Interactive Bar */}
@@ -346,7 +355,7 @@ export default function Landing() {
               </div>
               <button
                 onClick={() =>
-                  navigate(
+                  handleDashboardAccess(
                     `/dashboard?search=${encodeURIComponent(searchQuery)}`,
                   )
                 }
