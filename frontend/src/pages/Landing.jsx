@@ -664,7 +664,7 @@ export default function Landing() {
                 className="w-full h-full object-contain"
               />
             </div>
-            <span className="text-xl font-bold text-gov-gold tracking-tight">
+            <span className="text-xl font-bold text-gov-red dark:text-gov-gold tracking-tight">
               CivicWatch
             </span>
           </div>
