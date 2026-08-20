@@ -599,6 +599,7 @@ export default function Landing() {
 
                   <Link
                     to={`/reports/${report.id}`}
+                    state={{ from: "/" }}
                     className="mt-4 inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-blue-600 transition-colors"
                   >
                     View Details

@@ -1,22 +1,22 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { 
-  HiExclamationTriangle, 
-  HiMapPin, 
-  HiDocumentText, 
-  HiPhoto, 
-  HiPaperAirplane, 
-  HiArrowLeft, 
+import {
+  HiExclamationTriangle,
+  HiMapPin,
+  HiDocumentText,
+  HiPhoto,
+  HiPaperAirplane,
+  HiArrowLeft,
   HiCheckCircle,
-  HiXMark
+  HiXMark,
 } from "react-icons/hi2";
-import { 
-  FaRoad, 
-  FaLightbulb, 
-  FaTrashCan, 
-  FaDroplet, 
-  FaTree, 
-  FaSpinner 
+import {
+  FaRoad,
+  FaLightbulb,
+  FaTrashCan,
+  FaDroplet,
+  FaTree,
+  FaSpinner,
 } from "react-icons/fa6";
 
 export default function ReportIssue() {
@@ -33,11 +33,36 @@ export default function ReportIssue() {
   const navigate = useNavigate();
 
   const presets = [
-    { label: "Broken Pothole", icon: FaRoad, title: "Damaged Pothole on Road", color: "text-amber-600 bg-amber-50" },
-    { label: "Streetlight Fault", icon: FaLightbulb, title: "Faulty / Out Streetlight", color: "text-yellow-600 bg-yellow-50" },
-    { label: "Uncollected Waste", icon: FaTrashCan, title: "Illegal Waste & Trash Overflow", color: "text-emerald-600 bg-emerald-50" },
-    { label: "Water Leakage", icon: FaDroplet, title: "Burst Pipe & Water Leakage", color: "text-blue-600 bg-blue-50" },
-    { label: "Public Park Issue", icon: FaTree, title: "Damaged Park Equipment", color: "text-green-600 bg-green-50" },
+    {
+      label: "Broken Pothole",
+      icon: FaRoad,
+      title: "Damaged Pothole on Road",
+      color: "text-amber-600 bg-amber-50",
+    },
+    {
+      label: "Streetlight Fault",
+      icon: FaLightbulb,
+      title: "Faulty / Out Streetlight",
+      color: "text-yellow-600 bg-yellow-50",
+    },
+    {
+      label: "Uncollected Waste",
+      icon: FaTrashCan,
+      title: "Illegal Waste & Trash Overflow",
+      color: "text-emerald-600 bg-emerald-50",
+    },
+    {
+      label: "Water Leakage",
+      icon: FaDroplet,
+      title: "Burst Pipe & Water Leakage",
+      color: "text-blue-600 bg-blue-50",
+    },
+    {
+      label: "Public Park Issue",
+      icon: FaTree,
+      title: "Damaged Park Equipment",
+      color: "text-green-600 bg-green-50",
+    },
   ];
 
   const handlePresetSelect = (presetTitle) => {
@@ -61,7 +86,9 @@ export default function ReportIssue() {
         setShowMapPin(true);
       },
       () => {
-        setErrorMsg("Unable to get your current location. You can enter coordinates manually.");
+        setErrorMsg(
+          "Unable to get your current location. You can enter coordinates manually.",
+        );
       },
     );
   };
@@ -79,6 +106,8 @@ export default function ReportIssue() {
     setSubmitting(true);
 
     try {
+      const savedUser = localStorage.getItem("user");
+      const user = savedUser ? JSON.parse(savedUser) : null;
       const response = await fetch("http://localhost:5000/reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -87,6 +116,7 @@ export default function ReportIssue() {
           description,
           location,
           image,
+          submitterName: user?.name || "Citizen",
           latitude: hasMapPin ? latitude : null,
           longitude: hasMapPin ? longitude : null,
         }),
@@ -111,7 +141,9 @@ export default function ReportIssue() {
       }
     } catch (err) {
       console.error("Error submitting report:", err);
-      setErrorMsg("Failed to connect to backend server. Make sure backend is running.");
+      setErrorMsg(
+        "Failed to connect to backend server. Make sure backend is running.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -120,7 +152,6 @@ export default function ReportIssue() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans py-12 px-6">
       <div className="max-w-2xl mx-auto">
-        
         {/* Back Link */}
         <Link
           to="/dashboard"
@@ -131,7 +162,6 @@ export default function ReportIssue() {
         </Link>
 
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-          
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
@@ -142,7 +172,8 @@ export default function ReportIssue() {
                 Submit a Civic Issue Report
               </h1>
               <p className="text-xs text-slate-500 mt-1">
-                Provide details to notify municipal authorities and dispatch maintenance teams.
+                Provide details to notify municipal authorities and dispatch
+                maintenance teams.
               </p>
             </div>
           </div>
@@ -162,7 +193,9 @@ export default function ReportIssue() {
                     onClick={() => handlePresetSelect(preset.title)}
                     className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors flex items-center gap-1.5"
                   >
-                    <IconComp className={`w-3.5 h-3.5 ${preset.color.split(' ')[0]}`} />
+                    <IconComp
+                      className={`w-3.5 h-3.5 ${preset.color.split(" ")[0]}`}
+                    />
                     <span>{preset.label}</span>
                   </button>
                 );
@@ -187,7 +220,6 @@ export default function ReportIssue() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            
             {/* Title */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
@@ -229,10 +261,14 @@ export default function ReportIssue() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700">
-                    Map Location <span className="text-slate-400 font-normal">(Optional)</span>
+                    Map Location{" "}
+                    <span className="text-slate-400 font-normal">
+                      (Optional)
+                    </span>
                   </label>
                   <p className="text-[11px] text-slate-500 mt-1">
-                    Add an exact pin if you know the spot. The street name above is still enough.
+                    Add an exact pin if you know the spot. The street name above
+                    is still enough.
                   </p>
                 </div>
                 {!showMapPin ? (
@@ -269,7 +305,9 @@ export default function ReportIssue() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-500 mb-1.5">Latitude</label>
+                      <label className="block text-[11px] font-bold text-slate-500 mb-1.5">
+                        Latitude
+                      </label>
                       <input
                         type="number"
                         step="any"
@@ -282,7 +320,9 @@ export default function ReportIssue() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-500 mb-1.5">Longitude</label>
+                      <label className="block text-[11px] font-bold text-slate-500 mb-1.5">
+                        Longitude
+                      </label>
                       <input
                         type="number"
                         step="any"
@@ -333,7 +373,8 @@ export default function ReportIssue() {
             {/* Image URL */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Image Link / Photo URL <span className="text-slate-400 font-normal">(Optional)</span>
+                Image Link / Photo URL{" "}
+                <span className="text-slate-400 font-normal">(Optional)</span>
               </label>
               <div className="relative">
                 <HiPhoto className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -350,12 +391,16 @@ export default function ReportIssue() {
             {/* Live Image Preview */}
             {image && (
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Image Preview</span>
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                  Image Preview
+                </span>
                 <img
                   src={image}
                   alt="Live Attachment Preview"
                   className="w-full h-44 object-cover rounded-xl border border-slate-200"
-                  onError={(e) => { e.target.style.display = 'none'; }}
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                  }}
                 />
               </div>
             )}
@@ -378,9 +423,7 @@ export default function ReportIssue() {
                 </>
               )}
             </button>
-
           </form>
-
         </div>
       </div>
     </div>

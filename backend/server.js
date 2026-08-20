@@ -33,6 +33,7 @@ db.run(
     status TEXT DEFAULT 'Pending',
     priority TEXT DEFAULT 'Medium',
     support_count INTEGER DEFAULT 0,
+    submitter_name TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`,
   (err) => {
@@ -44,17 +45,23 @@ db.run(
   },
 );
 
-db.run(`ALTER TABLE reports ADD COLUMN priority TEXT DEFAULT 'Medium'`, (err) => {
-  if (err && !err.message.includes("duplicate column name")) {
-    console.error("Error adding priority column:", err.message);
-  }
-});
+db.run(
+  `ALTER TABLE reports ADD COLUMN priority TEXT DEFAULT 'Medium'`,
+  (err) => {
+    if (err && !err.message.includes("duplicate column name")) {
+      console.error("Error adding priority column:", err.message);
+    }
+  },
+);
 
-db.run(`ALTER TABLE reports ADD COLUMN support_count INTEGER DEFAULT 0`, (err) => {
-  if (err && !err.message.includes("duplicate column name")) {
-    console.error("Error adding support count column:", err.message);
-  }
-});
+db.run(
+  `ALTER TABLE reports ADD COLUMN support_count INTEGER DEFAULT 0`,
+  (err) => {
+    if (err && !err.message.includes("duplicate column name")) {
+      console.error("Error adding support count column:", err.message);
+    }
+  },
+);
 
 db.run(`ALTER TABLE reports ADD COLUMN latitude REAL`, (err) => {
   if (err && !err.message.includes("duplicate column name")) {
@@ -65,6 +72,12 @@ db.run(`ALTER TABLE reports ADD COLUMN latitude REAL`, (err) => {
 db.run(`ALTER TABLE reports ADD COLUMN longitude REAL`, (err) => {
   if (err && !err.message.includes("duplicate column name")) {
     console.error("Error adding longitude column:", err.message);
+  }
+});
+
+db.run(`ALTER TABLE reports ADD COLUMN submitter_name TEXT`, (err) => {
+  if (err && !err.message.includes("duplicate column name")) {
+    console.error("Error adding submitter name column:", err.message);
   }
 });
 
@@ -168,7 +181,16 @@ app.get("/", (req, res) => {
 
 // 1. CREATE a new report (POST /reports)
 app.post("/reports", (req, res) => {
-  const { title, description, image, location, priority, latitude, longitude } = req.body;
+  const {
+    title,
+    description,
+    image,
+    location,
+    priority,
+    latitude,
+    longitude,
+    submitterName,
+  } = req.body;
 
   if (!title || !description || !location) {
     return res
@@ -176,8 +198,10 @@ app.post("/reports", (req, res) => {
       .json({ error: "Title, description, and location are required." });
   }
 
-  const hasLatitude = latitude !== undefined && latitude !== null && latitude !== "";
-  const hasLongitude = longitude !== undefined && longitude !== null && longitude !== "";
+  const hasLatitude =
+    latitude !== undefined && latitude !== null && latitude !== "";
+  const hasLongitude =
+    longitude !== undefined && longitude !== null && longitude !== "";
   const parsedLatitude = hasLatitude ? Number(latitude) : null;
   const parsedLongitude = hasLongitude ? Number(longitude) : null;
 
@@ -190,11 +214,22 @@ app.post("/reports", (req, res) => {
       parsedLongitude < -180 ||
       parsedLongitude > 180)
   ) {
-    return res.status(400).json({ error: "Valid map coordinates are required." });
+    return res
+      .status(400)
+      .json({ error: "Valid map coordinates are required." });
   }
 
   const reportPriority = priority || "Medium";
-  const query = `INSERT INTO reports (title, description, image, location, priority, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+  const normalizedSubmitterName =
+    typeof submitterName === "string" ? submitterName.trim() : "";
+
+  if (!normalizedSubmitterName) {
+    return res.status(401).json({
+      error: "You must be signed in to submit a report.",
+    });
+  }
+
+  const query = `INSERT INTO reports (title, description, image, location, priority, latitude, longitude, submitter_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
   const params = [
     title,
     description,
@@ -203,6 +238,7 @@ app.post("/reports", (req, res) => {
     reportPriority,
     parsedLatitude,
     parsedLongitude,
+    normalizedSubmitterName,
   ];
 
   db.run(query, params, function (err) {
@@ -216,7 +252,11 @@ app.post("/reports", (req, res) => {
 
     db.run(
       `INSERT INTO report_timeline (report_id, type, message) VALUES (?, ?, ?)`,
-      [this.lastID, "created", "Report submitted by a citizen."],
+      [
+        this.lastID,
+        "created",
+        `Report submitted by ${normalizedSubmitterName}.`,
+      ],
     );
   });
 });
@@ -259,15 +299,27 @@ app.get("/reports/:id", (req, res) => {
               return res.status(500).json({ error: commentsErr.message });
             }
 
+            const reportTimeline = timeline.map((event) =>
+              event.type === "created"
+                ? {
+                    ...event,
+                    message: report.submitter_name
+                      ? `Report submitted by ${report.submitter_name}.`
+                      : "Report submitter name was not recorded.",
+                  }
+                : event,
+            );
             const fallbackTimeline =
-              timeline.length > 0
-                ? timeline
+              reportTimeline.length > 0
+                ? reportTimeline
                 : [
                     {
                       id: 0,
                       report_id: report.id,
                       type: "created",
-                      message: "Report submitted by a citizen.",
+                      message: report.submitter_name
+                        ? `Report submitted by ${report.submitter_name}.`
+                        : "Report submitter name was not recorded.",
                       created_at: report.created_at,
                     },
                   ];
@@ -370,35 +422,39 @@ app.post("/reports/:id/comments", (req, res) => {
     return res.status(400).json({ error: "Comment message is required." });
   }
 
-  db.get(`SELECT id FROM reports WHERE id = ?`, [req.params.id], (err, report) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-    if (!report) {
-      return res.status(404).json({ error: "Report not found." });
-    }
+  db.get(
+    `SELECT id FROM reports WHERE id = ?`,
+    [req.params.id],
+    (err, report) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      if (!report) {
+        return res.status(404).json({ error: "Report not found." });
+      }
 
-    const commentAuthor = author && author.trim() ? author.trim() : "Citizen";
-    db.run(
-      `INSERT INTO report_comments (report_id, author, message) VALUES (?, ?, ?)`,
-      [req.params.id, commentAuthor, message.trim()],
-      function (commentErr) {
-        if (commentErr) {
-          return res.status(500).json({ error: commentErr.message });
-        }
+      const commentAuthor = author && author.trim() ? author.trim() : "Citizen";
+      db.run(
+        `INSERT INTO report_comments (report_id, author, message) VALUES (?, ?, ?)`,
+        [req.params.id, commentAuthor, message.trim()],
+        function (commentErr) {
+          if (commentErr) {
+            return res.status(500).json({ error: commentErr.message });
+          }
 
-        res.status(201).json({
-          message: "Comment added successfully!",
-          comment: {
-            id: this.lastID,
-            report_id: Number(req.params.id),
-            author: commentAuthor,
-            message: message.trim(),
-          },
-        });
-      },
-    );
-  });
+          res.status(201).json({
+            message: "Comment added successfully!",
+            comment: {
+              id: this.lastID,
+              report_id: Number(req.params.id),
+              author: commentAuthor,
+              message: message.trim(),
+            },
+          });
+        },
+      );
+    },
+  );
 });
 
 // 8. DELETE a report (DELETE /reports/:id)
