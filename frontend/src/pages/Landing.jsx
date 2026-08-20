@@ -662,15 +662,20 @@ export default function Landing() {
             &copy; 2026 CivicWatch Public Community System. All rights reserved.
           </p>
           <div className="flex items-center gap-6 text-xs font-medium text-slate-400">
-            <Link
-              to="/dashboard"
+            <button
+              type="button"
+              onClick={() => handleDashboardAccess("/dashboard")}
               className="hover:text-white transition-colors"
             >
               Dashboard
-            </Link>
-            <Link to="/report" className="hover:text-white transition-colors">
+            </button>
+            <button
+              type="button"
+              onClick={handleReportClick}
+              className="hover:text-white transition-colors"
+            >
               Report Issue
-            </Link>
+            </button>
             <Link to="/login" className="hover:text-white transition-colors">
               Sign In
             </Link>
