@@ -319,7 +319,7 @@ export default function ReportDetail() {
               <img
                 src={report.image}
                 alt={report.title}
-                className="mt-6 w-full max-h-[460px] object-cover rounded-2xl border border-slate-200"
+                className="mt-6 w-full max-h-115 object-cover rounded-2xl border border-slate-200"
                 onError={(event) => {
                   event.currentTarget.style.display = "none";
                 }}
@@ -434,7 +434,7 @@ export default function ReportDetail() {
               <div key={`${event.id}-${index}`} className="relative pl-8">
                 <span className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-blue-600 ring-4 ring-blue-100" />
                 {index < timeline.length - 1 && (
-                  <span className="absolute left-[5px] top-5 bottom-[-18px] w-px bg-slate-200" />
+                  <span className="absolute left-1.25 top-5 -bottom-4.5 w-px bg-slate-200" />
                 )}
                 <p className="text-sm font-bold text-slate-900">
                   {event.message}
