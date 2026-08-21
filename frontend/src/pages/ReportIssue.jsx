@@ -88,9 +88,9 @@ export default function ReportIssue() {
       },
       () => {
         setErrorMsg(
-          "Unable to get your current location. You can enter coordinates manually.",
+          "Unable to get your current location. You can enter coordinates manually."
         );
-      },
+      }
     );
   };
 
@@ -107,22 +107,13 @@ export default function ReportIssue() {
     setSubmitting(true);
 
     try {
-      const savedUser = localStorage.getItem("user");
-      const user = savedUser ? JSON.parse(savedUser) : null;
-      if (!user?.email && !user?.name) {
-        setErrorMsg("Please sign in before submitting a report.");
-        navigate("/login");
-        return;
-      }
-
-      // Insert directly into Supabase database table "reports"
+      // Insert directly into Supabase database table "reports" matching your actual columns
       const { error: insertError } = await supabase.from("reports").insert([
         {
           title,
           description,
           location,
-          image: image || null,
-          user_email: user.email || user.name,
+          image: image || "EMPTY",
           latitude: hasMapPin ? String(latitude) : null,
           longitude: hasMapPin ? String(longitude) : null,
           status: "Pending",
@@ -139,10 +130,11 @@ export default function ReportIssue() {
       setLongitude("");
       setShowMapPin(false);
       setImage("");
-
+      
       setTimeout(() => {
         navigate("/dashboard");
       }, 1500);
+
     } catch (err) {
       console.error("Error submitting report:", err);
       setErrorMsg(err.message || "Failed to submit report. Please try again.");
