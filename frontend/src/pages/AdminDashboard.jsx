@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "../supabaseClient"; // 👈 Make sure this path points to your supabaseClient file
 import { 
   HiShieldCheck, 
   HiMagnifyingGlass, 
@@ -28,13 +29,19 @@ export default function AdminDashboard() {
   const fetchReports = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/reports");
-      const data = await response.json();
-      if (response.ok && data.reports) {
-        setReports(data.reports);
+      // Query directly from Supabase 'reports' table
+      const { data, error } = await supabase
+        .from('reports')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setReports(data);
       }
     } catch (err) {
-      console.error("Error fetching reports:", err);
+      console.error("Error fetching reports from Supabase:", err.message);
     } finally {
       setLoading(false);
     }
@@ -46,47 +53,35 @@ export default function AdminDashboard() {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/reports/${id}/status`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
+      const { error } = await supabase
+        .from('reports')
+        .update({ status: newStatus })
+        .eq('id', id);
 
-      if (response.ok) {
-        setStatusMessage(`Report #${id} status updated to ${newStatus}`);
-        setTimeout(() => setStatusMessage(""), 3000);
-        fetchReports();
-      } else {
-        console.error("Failed to update status");
-      }
+      if (error) throw error;
+
+      setStatusMessage(`Report #${id} status updated to ${newStatus}`);
+      setTimeout(() => setStatusMessage(""), 3000);
+      fetchReports();
     } catch (err) {
-      console.error("Error updating status:", err);
+      console.error("Error updating status:", err.message);
     }
   };
 
   const handlePriorityChange = async (id, newPriority) => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/reports/${id}/priority`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ priority: newPriority }),
-        }
-      );
+      const { error } = await supabase
+        .from('reports')
+        .update({ priority: newPriority })
+        .eq('id', id);
 
-      if (response.ok) {
-        setStatusMessage(`Report #${id} priority updated to ${newPriority}`);
-        setTimeout(() => setStatusMessage(""), 3000);
-        fetchReports();
-      } else {
-        console.error("Failed to update priority");
-      }
+      if (error) throw error;
+
+      setStatusMessage(`Report #${id} priority updated to ${newPriority}`);
+      setTimeout(() => setStatusMessage(""), 3000);
+      fetchReports();
     } catch (err) {
-      console.error("Error updating priority:", err);
+      console.error("Error updating priority:", err.message);
     }
   };
 
@@ -94,17 +89,18 @@ export default function AdminDashboard() {
     if (!window.confirm(`Are you sure you want to delete Report #${id}?`)) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/reports/${id}`, {
-        method: "DELETE",
-      });
+      const { error } = await supabase
+        .from('reports')
+        .delete()
+        .eq('id', id);
 
-      if (response.ok) {
-        setStatusMessage(`Report #${id} deleted successfully.`);
-        setTimeout(() => setStatusMessage(""), 3000);
-        fetchReports();
-      }
+      if (error) throw error;
+
+      setStatusMessage(`Report #${id} deleted successfully.`);
+      setTimeout(() => setStatusMessage(""), 3000);
+      fetchReports();
     } catch (err) {
-      console.error("Error deleting report:", err);
+      console.error("Error deleting report:", err.message);
     }
   };
 
@@ -142,15 +138,15 @@ export default function AdminDashboard() {
     const matchesStatus = selectedStatus === "All" || report.status === selectedStatus;
     const matchesSearch =
       searchQuery === "" ||
-      report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.description.toLowerCase().includes(searchQuery.toLowerCase());
+      report.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.description?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-16">
-      
+
       {/* Header Banner */}
       <div className="bg-purple-950 text-white border-b border-purple-900 py-10 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -176,10 +172,10 @@ export default function AdminDashboard() {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 -mt-6">
-        
+
         {/* Status Toast Alert */}
         {statusMessage && (
-          <div className="mb-6 p-4 bg-purple-100 border border-purple-200 text-purple-900 rounded-2xl text-xs font-semibold flex items-center justify-between animate-in fade-in shadow-sm">
+          <div className="mb-6 p-4 bg-purple-100 border border-purple-200 text-purple-900 rounded-2xl text-xs font-semibold flex items-center justify-between shadow-sm">
             <span className="flex items-center gap-2">
               <HiShieldCheck className="w-4 h-4 text-purple-600" />
               {statusMessage}
@@ -235,7 +231,7 @@ export default function AdminDashboard() {
 
         {/* Filter Controls Bar */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          
+
           {/* Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
             {["All", "Pending", "In Progress", "Resolved"].map((tab) => (
