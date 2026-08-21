@@ -19,6 +19,8 @@ import {
   FaSpinner,
 } from "react-icons/fa6";
 
+const API_URL = "http://127.0.0.1:5000";
+
 export default function ReportIssue() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -108,7 +110,13 @@ export default function ReportIssue() {
     try {
       const savedUser = localStorage.getItem("user");
       const user = savedUser ? JSON.parse(savedUser) : null;
-      const response = await fetch("http://localhost:5000/reports", {
+      if (!user?.name) {
+        setErrorMsg("Please sign in before submitting a report.");
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/reports`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -116,13 +124,22 @@ export default function ReportIssue() {
           description,
           location,
           image,
-          submitterName: user?.name || "Citizen",
+          submitterName: user.name,
           latitude: hasMapPin ? latitude : null,
           longitude: hasMapPin ? longitude : null,
         }),
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+      let data = {};
+
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        throw new Error(
+          `The backend returned an invalid response (${response.status}).`,
+        );
+      }
 
       if (response.ok) {
         setMessage("Report submitted successfully! Directing to dashboard...");
@@ -142,7 +159,9 @@ export default function ReportIssue() {
     } catch (err) {
       console.error("Error submitting report:", err);
       setErrorMsg(
-        "Failed to connect to backend server. Make sure backend is running.",
+        err instanceof TypeError
+          ? `Unable to reach the backend at ${API_URL}. Make sure it is running.`
+          : err.message || "Failed to submit report.",
       );
     } finally {
       setSubmitting(false);

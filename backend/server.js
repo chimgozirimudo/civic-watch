@@ -459,19 +459,42 @@ app.post("/reports/:id/comments", (req, res) => {
 
 // 8. DELETE a report (DELETE /reports/:id)
 app.delete("/reports/:id", (req, res) => {
-  const query = `DELETE FROM reports WHERE id = ?`;
-  db.run(query, [req.params.id], function (err) {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-    if (this.changes === 0) {
-      return res.status(404).json({ error: "Report not found." });
-    }
-    res.json({ message: "Report deleted successfully!" });
-  });
+  const requesterName =
+    typeof req.body?.requesterName === "string"
+      ? req.body.requesterName.trim()
+      : "";
+
+  db.get(
+    `SELECT submitter_name FROM reports WHERE id = ?`,
+    [req.params.id],
+    (lookupErr, report) => {
+      if (lookupErr) {
+        return res.status(500).json({ error: lookupErr.message });
+      }
+      if (!report) {
+        return res.status(404).json({ error: "Report not found." });
+      }
+      if (requesterName && requesterName !== report.submitter_name) {
+        return res.status(403).json({
+          error: "You can only delete reports submitted by you.",
+        });
+      }
+
+      const query = `DELETE FROM reports WHERE id = ?`;
+      db.run(query, [req.params.id], function (err) {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        if (this.changes === 0) {
+          return res.status(404).json({ error: "Report not found." });
+        }
+        res.json({ message: "Report deleted successfully!" });
+      });
+    },
+  );
 });
 
 // Start the server
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

@@ -12,6 +12,7 @@ import {
   HiMapPin,
   HiPaperAirplane,
   HiSignal,
+  HiTrash,
   HiUserCircle,
   HiUsers,
 } from "react-icons/hi2";
@@ -42,8 +43,14 @@ export default function ReportDetail() {
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [supporting, setSupporting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const returnPath = location.state?.from || "/dashboard";
   const returnLabel = returnPath === "/" ? "Back to Home" : "Back to Dashboard";
+  const savedUser = localStorage.getItem("user");
+  const currentUser = savedUser ? JSON.parse(savedUser) : null;
+  const canDeleteReport =
+    currentUser?.role === "admin" ||
+    (currentUser?.name && currentUser.name === report?.submitter_name);
 
   const fetchReport = async () => {
     try {
@@ -124,6 +131,36 @@ export default function ReportDetail() {
       setError(err.message || "Unable to support this report.");
     } finally {
       setSupporting(false);
+    }
+  };
+
+  const handleDeleteReport = async () => {
+    if (!window.confirm("Are you sure you want to delete this report?")) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setError("");
+      const response = await fetch(`${API_URL}/reports/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body:
+          currentUser?.role === "admin"
+            ? undefined
+            : JSON.stringify({ requesterName: currentUser?.name }),
+      });
+      const data = await readJsonResponse(response);
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to delete this report.");
+      }
+
+      navigate(returnPath);
+    } catch (err) {
+      setError(err.message || "Unable to delete this report.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -257,6 +294,17 @@ export default function ReportDetail() {
                 <HiSignal className="w-4 h-4" />
                 {report.priority || "Medium"} Priority
               </span>
+              {canDeleteReport && (
+                <button
+                  type="button"
+                  onClick={handleDeleteReport}
+                  disabled={deleting}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-50 transition-colors"
+                >
+                  <HiTrash className="w-4 h-4" />
+                  {deleting ? "Deleting..." : "Delete Report"}
+                </button>
+              )}
             </div>
           </div>
         </div>
