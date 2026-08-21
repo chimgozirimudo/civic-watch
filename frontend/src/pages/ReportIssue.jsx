@@ -18,8 +18,7 @@ import {
   FaTree,
   FaSpinner,
 } from "react-icons/fa6";
-
-const API_URL = "http://127.0.0.1:5000";
+import { supabase } from "../supabaseClient";
 
 export default function ReportIssue() {
   const [title, setTitle] = useState("");
@@ -116,53 +115,37 @@ export default function ReportIssue() {
         return;
       }
 
-      const response = await fetch(`${API_URL}/reports`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      // Insert directly into Supabase database table "reports"
+      const { error: insertError } = await supabase.from("reports").insert([
+        {
           title,
           description,
           location,
           image,
           submitterName: user.name,
-          latitude: hasMapPin ? latitude : null,
-          longitude: hasMapPin ? longitude : null,
-        }),
-      });
+          latitude: hasMapPin ? String(latitude) : null,
+          longitude: hasMapPin ? String(longitude) : null,
+          status: "Pending", // Default initial status
+        },
+      ]);
 
-      const responseText = await response.text();
-      let data = {};
+      if (insertError) throw insertError;
 
-      try {
-        data = responseText ? JSON.parse(responseText) : {};
-      } catch {
-        throw new Error(
-          `The backend returned an invalid response (${response.status}).`,
-        );
-      }
+      setMessage("Report submitted successfully! Directing to dashboard...");
+      setTitle("");
+      setDescription("");
+      setLocation("");
+      setLatitude("");
+      setLongitude("");
+      setShowMapPin(false);
+      setImage("");
 
-      if (response.ok) {
-        setMessage("Report submitted successfully! Directing to dashboard...");
-        setTitle("");
-        setDescription("");
-        setLocation("");
-        setLatitude("");
-        setLongitude("");
-        setShowMapPin(false);
-        setImage("");
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1500);
-      } else {
-        setErrorMsg(data.error || "Failed to submit report.");
-      }
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1500);
     } catch (err) {
       console.error("Error submitting report:", err);
-      setErrorMsg(
-        err instanceof TypeError
-          ? `Unable to reach the backend at ${API_URL}. Make sure it is running.`
-          : err.message || "Failed to submit report.",
-      );
+      setErrorMsg(err.message || "Failed to submit report. Please try again.");
     } finally {
       setSubmitting(false);
     }
