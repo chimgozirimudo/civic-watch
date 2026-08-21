@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { supabase } from '../supabaseClient'; // 👈 Make sure this path points to your supabaseClient file
 import { 
   HiPlusCircle, 
   HiMapPin, 
@@ -33,73 +34,25 @@ export default function Dashboard() {
 
   const fetchReports = async () => {
     try {
-      const response = await fetch('http://localhost:5000/reports');
-      const data = await response.json();
-      if (response.ok && data.reports) {
-        setReports(data.reports);
-        setLoading(false);
-        return;
+      setLoading(true);
+      // Fetch directly from your Supabase 'reports' table
+      const { data, error } = await supabase
+        .from('reports')
+        .select('*')
+        .order('created_at', { ascending: false }); // Sort newest first
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        setReports(data);
       }
     } catch (err) {
-      console.error('Error fetching reports, using fallback mock data:', err);
-    }
-    
-    // Fallback professional data if backend is down
-    setTimeout(() => {
-      setReports([
-        {
-          id: 1,
-          title: 'Traffic Signal Malfunction at Main St Intersection',
-          location: 'Intersection of Main St & 4th Ave',
-          description: 'The eastbound traffic light is completely out, causing severe traffic congestion and near-accidents during rush hour. Immediate maintenance required.',
-          status: 'In Progress',
-          priority: 'Urgent',
-          support_count: 142,
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-          latitude: 40.7128,
-          longitude: -74.0060,
-          image: 'https://images.unsplash.com/photo-1514319080562-b91a788bb2b8?auto=format&fit=crop&q=80&w=400'
-        },
-        {
-          id: 2,
-          title: 'Pothole on Interstate Highway 80',
-          location: 'I-80 Westbound, Mile Marker 42',
-          description: 'Large pothole in the center lane spanning approximately 3 feet across. Several vehicles have reported tire damage.',
-          status: 'Pending',
-          priority: 'High',
-          support_count: 89,
-          created_at: new Date(Date.now() - 172800000).toISOString(),
-          latitude: 40.7200,
-          longitude: -74.0150
-        },
-        {
-          id: 3,
-          title: 'Illegal Dumping in Public Park',
-          location: 'Centennial Park, North Entrance',
-          description: 'Significant amount of construction debris dumped overnight near the children\'s playground area. Environmental hazard.',
-          status: 'Resolved',
-          priority: 'Medium',
-          support_count: 56,
-          created_at: new Date(Date.now() - 432000000).toISOString(),
-          latitude: 40.7150,
-          longitude: -73.9900,
-          image: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&q=80&w=400'
-        },
-        {
-          id: 4,
-          title: 'Street Lighting Outage',
-          location: 'Oakwood Residential District',
-          description: 'Entire block of streetlights are unlit. Residents are concerned about pedestrian safety during evening hours.',
-          status: 'Pending',
-          priority: 'High',
-          support_count: 112,
-          created_at: new Date(Date.now() - 259200000).toISOString(),
-          latitude: 40.7250,
-          longitude: -73.9950
-        }
-      ]);
+      console.error('Error fetching reports from Supabase:', err.message);
+    } finally {
       setLoading(false);
-    }, 600);
+    }
   };
 
   useEffect(() => {
@@ -145,9 +98,9 @@ export default function Dashboard() {
   const filteredReports = reports.filter((report) => {
     const matchesStatus = selectedStatus === 'All' || report.status === selectedStatus;
     const matchesSearch = searchQuery === '' || 
-      report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.description.toLowerCase().includes(searchQuery.toLowerCase());
+      report.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.description?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
