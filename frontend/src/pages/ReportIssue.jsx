@@ -109,7 +109,7 @@ export default function ReportIssue() {
     try {
       const savedUser = localStorage.getItem("user");
       const user = savedUser ? JSON.parse(savedUser) : null;
-      if (!user?.name) {
+      if (!user?.email && !user?.name) {
         setErrorMsg("Please sign in before submitting a report.");
         navigate("/login");
         return;
@@ -121,11 +121,11 @@ export default function ReportIssue() {
           title,
           description,
           location,
-          image,
-          submitterName: user.name,
+          image: image || null,
+          user_email: user.email || user.name,
           latitude: hasMapPin ? String(latitude) : null,
           longitude: hasMapPin ? String(longitude) : null,
-          status: "Pending", // Default initial status
+          status: "Pending",
         },
       ]);
 
